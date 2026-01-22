@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Use environment variable for API URL, fallback to relative path for production
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+// Always use relative path for API in production (works with Vercel routing)
+// In development, Vite proxy will forward /api to localhost:5000
+const API_URL = '/api';
 
 // Create axios instance with default config
 const apiClient = axios.create({

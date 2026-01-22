@@ -212,11 +212,11 @@ function Dashboard() {
 
     if (loading) {
         return (
-            <div className="dashboard">
-                <div className="container">
-                    <div className="loading-state">
-                        <div className="spinner"></div>
-                        <p>Loading dashboard...</p>
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col items-center justify-center py-16">
+                        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading dashboard...</p>
                     </div>
                 </div>
             </div>
@@ -224,110 +224,138 @@ function Dashboard() {
     }
 
     return (
-        <div className="dashboard">
-            <div className="container">
-                <div className="dashboard-header">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
-                        <h1 className="animate-fade-in">Software License Dashboard</h1>
-                        <p className="text-secondary">Monitor and optimize your software licenses in real-time</p>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white animate-fade-in">
+                            Software License Dashboard
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-400 mt-1">
+                            Monitor and optimize your software licenses in real-time
+                        </p>
                     </div>
-                    <button className="btn btn-primary" onClick={() => alert('Export feature coming soon!')}>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => alert('Export feature coming soon!')}
+                    >
                         <span>📥</span>
                         Export Report
                     </button>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="stats-grid">
-                    <div className="stat-card card animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                        <div className="stat-icon" style={{ background: 'var(--gradient-primary)' }}>📊</div>
-                        <div className="stat-content">
-                            <div className="stat-label">Total Licenses</div>
-                            <div className="stat-value">{stats.totalLicenses.toLocaleString()}</div>
-                            <div className="stat-change positive">All vendors</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div className="card text-center animate-fade-in">
+                        <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-2xl">
+                            📊
                         </div>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Total Licenses</p>
+                        <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            {stats.totalLicenses.toLocaleString()}
+                        </p>
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-2">All vendors</p>
                     </div>
 
-                    <div className="stat-card card animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                        <div className="stat-icon" style={{ background: 'var(--gradient-success)' }}>✅</div>
-                        <div className="stat-content">
-                            <div className="stat-label">Active Licenses</div>
-                            <div className="stat-value">{stats.activeLicenses.toLocaleString()}</div>
-                            <div className="stat-change positive">{stats.utilizationRate}% avg usage</div>
+                    <div className="card text-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                        <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center text-2xl">
+                            ✅
                         </div>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Active Licenses</p>
+                        <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            {stats.activeLicenses.toLocaleString()}
+                        </p>
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-2">{stats.utilizationRate}% avg usage</p>
                     </div>
 
-                    <div className="stat-card card animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                        <div className="stat-icon" style={{ background: 'var(--gradient-warm)' }}>⚠️</div>
-                        <div className="stat-content">
-                            <div className="stat-label">Expiring Soon</div>
-                            <div className="stat-value">{stats.expiringSoon}</div>
-                            <div className="stat-change neutral">Next 30 days</div>
+                    <div className="card text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                        <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-orange-600 to-yellow-600 flex items-center justify-center text-2xl">
+                            ⚠️
                         </div>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Expiring Soon</p>
+                        <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            {stats.expiringSoon}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Next 30 days</p>
                     </div>
 
-                    <div className="stat-card card animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                        <div className="stat-icon" style={{ background: 'var(--gradient-secondary)' }}>💰</div>
-                        <div className="stat-content">
-                            <div className="stat-label">Potential Savings</div>
-                            <div className="stat-value">${(stats.potentialSavings / 1000).toFixed(0)}K</div>
-                            <div className="stat-change positive">Optimization opportunities</div>
+                    <div className="card text-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                        <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-2xl">
+                            💰
                         </div>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Potential Savings</p>
+                        <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            ${(stats.potentialSavings / 1000).toFixed(0)}K
+                        </p>
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-2">Optimization opportunities</p>
                     </div>
                 </div>
 
                 {/* Charts Grid */}
-                <div className="charts-grid">
-                    <div className="chart-card card">
-                        <div className="card-header">
-                            <h3 className="card-title">Cost Trend Analysis</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div className="card">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Cost Trend Analysis</h3>
                             <span className="badge badge-info">Last 6 Months</span>
                         </div>
-                        <div className="chart-container">
+                        <div className="h-64">
                             <Line data={costTrendData} options={chartOptions} />
                         </div>
                     </div>
 
-                    <div className="chart-card card">
-                        <div className="card-header">
-                            <h3 className="card-title">License Distribution</h3>
+                    <div className="card">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">License Distribution</h3>
                             <span className="badge badge-success">{stats.totalLicenses} Total</span>
                         </div>
-                        <div className="chart-container">
+                        <div className="h-64">
                             <Doughnut data={licenseDistData} options={doughnutOptions} />
                         </div>
                     </div>
 
-                    <div className="chart-card card" style={{ gridColumn: 'span 2' }}>
-                        <div className="card-header">
-                            <h3 className="card-title">Vendor Spending Breakdown</h3>
+                    <div className="card lg:col-span-2">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Vendor Spending Breakdown</h3>
                             <span className="badge badge-warning">${(stats.monthlyCost / 1000).toFixed(0)}K/month</span>
                         </div>
-                        <div className="chart-container">
+                        <div className="h-64">
                             <Bar data={vendorSpendingData} options={chartOptions} />
                         </div>
                     </div>
                 </div>
 
                 {/* Quick Actions */}
-                <div className="quick-actions">
-                    <h3>Quick Actions</h3>
-                    <div className="action-grid">
-                        <button className="action-card glass-card" onClick={() => navigate('/licenses')}>
-                            <span className="action-icon">➕</span>
-                            <span className="action-label">Manage Licenses</span>
+                <div className="mb-8">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <button
+                            className="card hover:shadow-2xl transition-all transform hover:-translate-y-1 cursor-pointer p-6 flex flex-col items-center gap-3"
+                            onClick={() => navigate('/licenses')}
+                        >
+                            <span className="text-4xl">➕</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">Manage Licenses</span>
                         </button>
-                        <button className="action-card glass-card" onClick={() => navigate('/audit')}>
-                            <span className="action-icon">🔍</span>
-                            <span className="action-label">Run Audit</span>
+                        <button
+                            className="card hover:shadow-2xl transition-all transform hover:-translate-y-1 cursor-pointer p-6 flex flex-col items-center gap-3"
+                            onClick={() => navigate('/audit')}
+                        >
+                            <span className="text-4xl">🔍</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">Run Audit</span>
                         </button>
-                        <button className="action-card glass-card" onClick={() => navigate('/optimization')}>
-                            <span className="action-icon">⚡</span>
-                            <span className="action-label">Optimize</span>
+                        <button
+                            className="card hover:shadow-2xl transition-all transform hover:-translate-y-1 cursor-pointer p-6 flex flex-col items-center gap-3"
+                            onClick={() => navigate('/optimization')}
+                        >
+                            <span className="text-4xl">⚡</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">Optimize</span>
                         </button>
-                        <button className="action-card glass-card" onClick={() => navigate('/analytics')}>
-                            <span className="action-icon">📊</span>
-                            <span className="action-label">View Analytics</span>
+                        <button
+                            className="card hover:shadow-2xl transition-all transform hover:-translate-y-1 cursor-pointer p-6 flex flex-col items-center gap-3"
+                            onClick={() => navigate('/analytics')}
+                        >
+                            <span className="text-4xl">📊</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">View Analytics</span>
                         </button>
                     </div>
                 </div>

@@ -13,6 +13,8 @@ import {
     Legend,
     Filler
 } from 'chart.js';
+import { licenseAPI, analyticsAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
 // Register ChartJS components
@@ -30,52 +32,90 @@ ChartJS.register(
 );
 
 function Dashboard() {
-    const [stats] = useState({
-        totalLicenses: 1247,
-        activeLicenses: 892,
-        expiringSoon: 23,
-        potentialSavings: 450000,
-        monthlyCost: 125000,
-        utilizationRate: 71.5,
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        totalLicenses: 0,
+        activeLicenses: 0,
+        expiringSoon: 0,
+        potentialSavings: 0,
+        monthlyCost: 0,
+        utilizationRate: 0,
         complianceScore: 94,
     });
 
-    const [activities] = useState([
-        { id: 1, type: 'renewal', vendor: 'Microsoft', action: 'License renewed', time: '2 hours ago', status: 'success' },
-        { id: 2, type: 'alert', vendor: 'SAP', action: 'Expiring in 30 days', time: '5 hours ago', status: 'warning' },
-        { id: 3, type: 'optimization', vendor: 'Oracle', action: 'Savings identified', time: '1 day ago', status: 'info' },
-        { id: 4, type: 'audit', vendor: 'Salesforce', action: 'Compliance check passed', time: '2 days ago', status: 'success' },
-        { id: 5, type: 'alert', vendor: 'IBM', action: 'Over-provisioned licenses', time: '3 days ago', status: 'warning' },
-    ]);
+    const [vendorData, setVendorData] = useState({});
+    const [licenses, setLicenses] = useState([]);
 
-    // Cost Trend Chart Data
-    const costTrendData = {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        datasets: [
-            {
-                label: 'Actual Cost',
-                data: [135000, 128000, 132000, 125000, 122000, 125000],
-                borderColor: 'hsl(220, 75%, 55%)',
-                backgroundColor: 'hsla(220, 75%, 55%, 0.1)',
-                fill: true,
-                tension: 0.4,
-            },
-            {
-                label: 'Optimized Cost',
-                data: [130000, 122000, 125000, 118000, 115000, 117000],
-                borderColor: 'hsl(145, 65%, 50%)',
-                backgroundColor: 'hsla(145, 65%, 50%, 0.1)',
-                fill: true,
-                tension: 0.4,
-            }
-        ]
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+
+            // Fetch licenses and analytics in parallel
+            const [licensesRes, costSummaryRes] = await Promise.all([
+                licenseAPI.getAll(),
+                analyticsAPI.getCostSummary().catch(() => ({ data: {} }))
+            ]);
+
+            const licensesData = licensesRes.data;
+            setLicenses(licensesData);
+
+            // Calculate stats from licenses
+            const totalLicenses = licensesData.length;
+            const activeLicenses = licensesData.filter(l => l.status === 'active').length;
+            const expiringSoon = licensesData.filter(l => {
+                const daysUntil = (new Date(l.renewalDate) - new Date()) / (1000 * 60 * 60 * 24);
+                return daysUntil < 30 && daysUntil > 0;
+            }).length;
+
+            const monthlyCost = licensesData.reduce((sum, l) => sum + (l.cost || 0), 0);
+            const avgUtilization = licensesData.length > 0
+                ? licensesData.reduce((sum, l) => sum + (l.usage || 0), 0) / licensesData.length
+                : 0;
+
+            // Calculate potential savings (licenses with usage < 50%)
+            const underutilized = licensesData.filter(l => (l.usage || 0) < 50);
+            const potentialSavings = underutilized.reduce((sum, l) => sum + (l.cost || 0) * 0.3, 0);
+
+            setStats({
+                totalLicenses,
+                activeLicenses,
+                expiringSoon,
+                potentialSavings: Math.round(potentialSavings),
+                monthlyCost,
+                utilizationRate: Math.round(avgUtilization),
+                complianceScore: 94,
+            });
+
+            // Group licenses by vendor for charts
+            const groupedByVendor = licensesData.reduce((acc, lic) => {
+                if (!acc[lic.vendor]) {
+                    acc[lic.vendor] = { count: 0, cost: 0 };
+                }
+                acc[lic.vendor].count++;
+                acc[lic.vendor].cost += lic.cost || 0;
+                return acc;
+            }, {});
+
+            setVendorData(groupedByVendor);
+
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // License Distribution Chart
+    // Generate chart data from real vendor data
+    const vendors = Object.keys(vendorData);
     const licenseDistData = {
-        labels: ['Microsoft', 'SAP', 'Oracle', 'Salesforce', 'IBM', 'Other'],
+        labels: vendors,
         datasets: [{
-            data: [350, 280, 210, 180, 150, 77],
+            data: vendors.map(v => vendorData[v]?.count || 0),
             backgroundColor: [
                 'hsl(220, 75%, 55%)',
                 'hsl(280, 65%, 55%)',
@@ -88,15 +128,29 @@ function Dashboard() {
         }]
     };
 
-    // Vendor Spending Chart
     const vendorSpendingData = {
-        labels: ['Microsoft', 'SAP', 'Oracle', 'Salesforce', 'IBM'],
+        labels: vendors,
         datasets: [{
             label: 'Monthly Spend ($)',
-            data: [45000, 32000, 24000, 15000, 9000],
+            data: vendors.map(v => vendorData[v]?.cost || 0),
             backgroundColor: 'hsl(220, 75%, 55%)',
             borderRadius: 8,
         }]
+    };
+
+    // Cost trend - use sample data for now (would need historical data)
+    const costTrendData = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [
+            {
+                label: 'Actual Cost',
+                data: [135000, 128000, 132000, 125000, 122000, stats.monthlyCost],
+                borderColor: 'hsl(220, 75%, 55%)',
+                backgroundColor: 'hsla(220, 75%, 55%, 0.1)',
+                fill: true,
+                tension: 0.4,
+            }
+        ]
     };
 
     const chartOptions = {
@@ -109,10 +163,7 @@ function Dashboard() {
                 labels: {
                     color: 'var(--text-secondary)',
                     padding: 15,
-                    font: {
-                        size: 12,
-                        family: "'Inter', sans-serif"
-                    }
+                    font: { size: 12, family: "'Inter', sans-serif" }
                 }
             },
             tooltip: {
@@ -127,20 +178,12 @@ function Dashboard() {
         },
         scales: {
             x: {
-                grid: {
-                    display: false,
-                },
-                ticks: {
-                    color: 'var(--text-tertiary)'
-                }
+                grid: { display: false },
+                ticks: { color: 'var(--text-tertiary)' }
             },
             y: {
-                grid: {
-                    color: 'var(--border-color)',
-                },
-                ticks: {
-                    color: 'var(--text-tertiary)'
-                }
+                grid: { color: 'var(--border-color)' },
+                ticks: { color: 'var(--text-tertiary)' }
             }
         }
     };
@@ -154,10 +197,7 @@ function Dashboard() {
                 labels: {
                     color: 'var(--text-secondary)',
                     padding: 10,
-                    font: {
-                        size: 11,
-                        family: "'Inter', sans-serif"
-                    }
+                    font: { size: 11, family: "'Inter', sans-serif" }
                 }
             },
             tooltip: {
@@ -170,6 +210,19 @@ function Dashboard() {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="dashboard">
+                <div className="container">
+                    <div className="loading-state">
+                        <div className="spinner"></div>
+                        <p>Loading dashboard...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="dashboard">
             <div className="container">
@@ -178,7 +231,7 @@ function Dashboard() {
                         <h1 className="animate-fade-in">Software License Dashboard</h1>
                         <p className="text-secondary">Monitor and optimize your software licenses in real-time</p>
                     </div>
-                    <button className="btn btn-primary">
+                    <button className="btn btn-primary" onClick={() => alert('Export feature coming soon!')}>
                         <span>📥</span>
                         Export Report
                     </button>
@@ -191,7 +244,7 @@ function Dashboard() {
                         <div className="stat-content">
                             <div className="stat-label">Total Licenses</div>
                             <div className="stat-value">{stats.totalLicenses.toLocaleString()}</div>
-                            <div className="stat-change positive">+12% from last month</div>
+                            <div className="stat-change positive">All vendors</div>
                         </div>
                     </div>
 
@@ -200,7 +253,7 @@ function Dashboard() {
                         <div className="stat-content">
                             <div className="stat-label">Active Licenses</div>
                             <div className="stat-value">{stats.activeLicenses.toLocaleString()}</div>
-                            <div className="stat-change positive">{stats.utilizationRate}% utilization</div>
+                            <div className="stat-change positive">{stats.utilizationRate}% avg usage</div>
                         </div>
                     </div>
 
@@ -256,48 +309,25 @@ function Dashboard() {
                     </div>
                 </div>
 
-                {/* Recent Activity */}
-                <div className="activity-section card">
-                    <div className="card-header">
-                        <h3 className="card-title">Recent Activity</h3>
-                        <a href="/licenses" className="text-primary">View All →</a>
-                    </div>
-                    <div className="activity-list">
-                        {activities.map(activity => (
-                            <div key={activity.id} className="activity-item">
-                                <div className={`activity-indicator ${activity.status}`}></div>
-                                <div className="activity-content">
-                                    <div className="activity-main">
-                                        <span className="activity-vendor font-semibold">{activity.vendor}</span>
-                                        <span className="activity-action">{activity.action}</span>
-                                    </div>
-                                    <div className="activity-time">{activity.time}</div>
-                                </div>
-                                <span className={`badge badge-${activity.status}`}>{activity.status}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
                 {/* Quick Actions */}
                 <div className="quick-actions">
                     <h3>Quick Actions</h3>
                     <div className="action-grid">
-                        <button className="action-card glass-card">
+                        <button className="action-card glass-card" onClick={() => navigate('/licenses')}>
                             <span className="action-icon">➕</span>
-                            <span className="action-label">Add License</span>
+                            <span className="action-label">Manage Licenses</span>
                         </button>
-                        <button className="action-card glass-card">
+                        <button className="action-card glass-card" onClick={() => navigate('/audit')}>
                             <span className="action-icon">🔍</span>
                             <span className="action-label">Run Audit</span>
                         </button>
-                        <button className="action-card glass-card">
+                        <button className="action-card glass-card" onClick={() => navigate('/optimization')}>
                             <span className="action-icon">⚡</span>
                             <span className="action-label">Optimize</span>
                         </button>
-                        <button className="action-card glass-card">
+                        <button className="action-card glass-card" onClick={() => navigate('/analytics')}>
                             <span className="action-icon">📊</span>
-                            <span className="action-label">Analytics</span>
+                            <span className="action-label">View Analytics</span>
                         </button>
                     </div>
                 </div>

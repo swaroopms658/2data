@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { analyticsAPI, licenseAPI } from '../services/api';
+import { downloadCSV } from '../utils/exportUtils';
 
 function VendorOptimization() {
     const [loading, setLoading] = useState(true);
@@ -122,6 +123,29 @@ function VendorOptimization() {
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Vendor Optimization</h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">Identify savings and optimization opportunities by vendor</p>
                     </div>
+                    <button
+                        onClick={() => {
+                            // Flatten opportunities for export
+                            const dataToExport = opportunities?.map(op => ({
+                                Vendor: selectedVendor,
+                                Type: op.type,
+                                Count: op.count,
+                                Savings: op.saving,
+                                Priority: op.priority
+                            })) || [];
+
+                            if (dataToExport.length > 0) {
+                                downloadCSV(dataToExport, `optimization_report_${selectedVendor}.csv`);
+                            } else {
+                                alert('No opportunities to export.');
+                            }
+                        }}
+                        className="btn btn-secondary"
+                        disabled={!opportunities || opportunities.length === 0}
+                    >
+                        <span>📊</span>
+                        Export Report
+                    </button>
                 </div>
 
                 {/* Vendor Selector */}

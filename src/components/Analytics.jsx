@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Line, Bar } from 'react-chartjs-2';
+import { downloadCSV } from '../utils/exportUtils';
 import { analyticsAPI } from '../services/api';
 
 function Analytics() {
@@ -113,7 +114,16 @@ function Analytics() {
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analytics & Insights</h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">Data-driven insights for license optimization</p>
                     </div>
-                    <button className="btn btn-primary">
+                    <button
+                        onClick={() => {
+                            if (vendorComparison.length > 0) {
+                                downloadCSV(vendorComparison, 'analytics_vendor_performance.csv');
+                            } else {
+                                alert('No analytics data to export.');
+                            }
+                        }}
+                        className="btn btn-primary"
+                    >
                         <span>📥</span>
                         Export Analytics
                     </button>

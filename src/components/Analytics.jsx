@@ -1,5 +1,5 @@
 import { Line, Bar } from 'react-chartjs-2';
-import './Analytics.css';
+
 
 function Analytics() {
     // ROI Analysis Data
@@ -136,7 +136,7 @@ function Analytics() {
                                 <div className="insight-header">
                                     <h4>{insight.title}</h4>
                                     <span className={`badge badge-${insight.impact === 'High' ? 'danger' :
-                                            insight.impact === 'Medium' ? 'warning' : 'success'
+                                        insight.impact === 'Medium' ? 'warning' : 'success'
                                         }`}>
                                         {insight.impact} Impact
                                     </span>

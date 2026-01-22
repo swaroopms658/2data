@@ -15,7 +15,7 @@ import {
 } from 'chart.js';
 import { licenseAPI, analyticsAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
-import './Dashboard.css';
+
 
 // Register ChartJS components
 ChartJS.register(

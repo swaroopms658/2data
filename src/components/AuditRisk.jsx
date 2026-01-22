@@ -1,5 +1,5 @@
 import { Doughnut } from 'react-chartjs-2';
-import './AuditRisk.css';
+
 
 function AuditRisk() {
     const overallScore = 94;

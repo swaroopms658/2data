@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './VendorOptimization.css';
+
 
 function VendorOptimization() {
     const [selectedVendor, setSelectedVendor] = useState('Microsoft');

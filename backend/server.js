@@ -12,9 +12,29 @@ app.use(express.json());
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/license-manager';
 
-mongoose.connect(MONGODB_URI)
-    .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
+let cachedConnection = null;
+
+const connectDB = async () => {
+    if (cachedConnection) {
+        return cachedConnection;
+    }
+
+    try {
+        const conn = await mongoose.connect(MONGODB_URI, {
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        });
+        cachedConnection = conn;
+        console.log('✅ Connected to MongoDB');
+        return conn;
+    } catch (err) {
+        console.error('❌ MongoDB connection error:', err);
+        throw err;
+    }
+};
+
+// Connect to DB immediately but don't block app export
+connectDB();
 
 // Routes
 const licenseRoutes = require('./routes/license.routes');

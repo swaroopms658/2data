@@ -25,7 +25,8 @@ function LicenseInventory() {
             const response = await licenseAPI.getAll();
             setLicenses(response.data);
         } catch (err) {
-            setError('Failed to load licenses. Please try again.');
+            const errorMessage = err.response?.data?.error || err.message || 'Unknown error';
+            setError(`Failed to load licenses: ${errorMessage}`);
             console.error('Error fetching licenses:', err);
         } finally {
             setLoading(false);

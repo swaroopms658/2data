@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import './LicenseModal.css';
 
 function LicenseModal({ isOpen, onClose, onSave, license = null }) {
     const [formData, setFormData] = useState({
@@ -14,10 +13,10 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
     });
 
     const [errors, setErrors] = useState({});
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         if (license) {
-            // Edit mode - populate form with existing data
             setFormData({
                 vendor: license.vendor || '',
                 product: license.product || '',
@@ -29,7 +28,6 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
                 notes: license.notes || ''
             });
         } else {
-            // Add mode - reset form
             setFormData({
                 vendor: '',
                 product: '',
@@ -47,7 +45,6 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        // Clear error for this field
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -69,12 +66,13 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!validate()) return;
 
-        // Convert strings to numbers where needed
+        setSubmitting(true);
+
         const dataToSave = {
             ...formData,
             quantity: parseInt(formData.quantity),
@@ -82,29 +80,47 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
             usage: formData.usage ? parseInt(formData.usage) : 0
         };
 
-        onSave(dataToSave);
+        try {
+            await onSave(dataToSave);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2>{license ? 'Edit License' : 'Add New License'}</h2>
-                    <button className="modal-close" onClick={onClose}>✕</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slide-in" onClick={(e) => e.stopPropagation()}>
+                {/* Header */}
+                <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {license ? 'Edit License' : 'Add New License'}
+                    </h2>
+                    <button
+                        onClick={onClose}
+                        className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-all transform hover:rotate-90"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="modal-form">
-                    <div className="form-grid">
-                        <div className="form-group">
-                            <label htmlFor="vendor">Vendor *</label>
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Vendor */}
+                        <div>
+                            <label htmlFor="vendor" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Vendor *
+                            </label>
                             <select
                                 id="vendor"
                                 name="vendor"
                                 value={formData.vendor}
                                 onChange={handleChange}
-                                className={errors.vendor ? 'error' : ''}
+                                className={`input ${errors.vendor ? 'border-red-500' : ''}`}
                             >
                                 <option value="">Select Vendor</option>
                                 <option value="Microsoft">Microsoft</option>
@@ -114,11 +130,14 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
                                 <option value="IBM">IBM</option>
                                 <option value="Other">Other</option>
                             </select>
-                            {errors.vendor && <span className="error-text">{errors.vendor}</span>}
+                            {errors.vendor && <p className="text-red-500 text-xs mt-1">{errors.vendor}</p>}
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="product">Product Name *</label>
+                        {/* Product */}
+                        <div>
+                            <label htmlFor="product" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Product Name *
+                            </label>
                             <input
                                 type="text"
                                 id="product"
@@ -126,13 +145,16 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
                                 value={formData.product}
                                 onChange={handleChange}
                                 placeholder="e.g., Microsoft 365 E5"
-                                className={errors.product ? 'error' : ''}
+                                className={`input ${errors.product ? 'border-red-500' : ''}`}
                             />
-                            {errors.product && <span className="error-text">{errors.product}</span>}
+                            {errors.product && <p className="text-red-500 text-xs mt-1">{errors.product}</p>}
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="quantity">Quantity *</label>
+                        {/* Quantity */}
+                        <div>
+                            <label htmlFor="quantity" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Quantity *
+                            </label>
                             <input
                                 type="number"
                                 id="quantity"
@@ -141,13 +163,16 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
                                 onChange={handleChange}
                                 min="1"
                                 placeholder="100"
-                                className={errors.quantity ? 'error' : ''}
+                                className={`input ${errors.quantity ? 'border-red-500' : ''}`}
                             />
-                            {errors.quantity && <span className="error-text">{errors.quantity}</span>}
+                            {errors.quantity && <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>}
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="cost">Monthly Cost ($) *</label>
+                        {/* Cost */}
+                        <div>
+                            <label htmlFor="cost" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Monthly Cost ($) *
+                            </label>
                             <input
                                 type="number"
                                 id="cost"
@@ -157,31 +182,38 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
                                 min="0"
                                 step="0.01"
                                 placeholder="10000"
-                                className={errors.cost ? 'error' : ''}
+                                className={`input ${errors.cost ? 'border-red-500' : ''}`}
                             />
-                            {errors.cost && <span className="error-text">{errors.cost}</span>}
+                            {errors.cost && <p className="text-red-500 text-xs mt-1">{errors.cost}</p>}
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="renewalDate">Renewal Date *</label>
+                        {/* Renewal Date */}
+                        <div>
+                            <label htmlFor="renewalDate" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Renewal Date *
+                            </label>
                             <input
                                 type="date"
                                 id="renewalDate"
                                 name="renewalDate"
                                 value={formData.renewalDate}
                                 onChange={handleChange}
-                                className={errors.renewalDate ? 'error' : ''}
+                                className={`input ${errors.renewalDate ? 'border-red-500' : ''}`}
                             />
-                            {errors.renewalDate && <span className="error-text">{errors.renewalDate}</span>}
+                            {errors.renewalDate && <p className="text-red-500 text-xs mt-1">{errors.renewalDate}</p>}
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="status">Status *</label>
+                        {/* Status */}
+                        <div>
+                            <label htmlFor="status" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Status *
+                            </label>
                             <select
                                 id="status"
                                 name="status"
                                 value={formData.status}
                                 onChange={handleChange}
+                                className="select"
                             >
                                 <option value="active">Active</option>
                                 <option value="expiring">Expiring Soon</option>
@@ -190,8 +222,11 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
                             </select>
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="usage">Usage % (0-100)</label>
+                        {/* Usage */}
+                        <div>
+                            <label htmlFor="usage" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Usage % (0-100)
+                            </label>
                             <input
                                 type="number"
                                 id="usage"
@@ -201,13 +236,16 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
                                 min="0"
                                 max="100"
                                 placeholder="75"
-                                className={errors.usage ? 'error' : ''}
+                                className={`input ${errors.usage ? 'border-red-500' : ''}`}
                             />
-                            {errors.usage && <span className="error-text">{errors.usage}</span>}
+                            {errors.usage && <p className="text-red-500 text-xs mt-1">{errors.usage}</p>}
                         </div>
 
-                        <div className="form-group full-width">
-                            <label htmlFor="notes">Notes</label>
+                        {/* Notes */}
+                        <div className="md:col-span-2">
+                            <label htmlFor="notes" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Notes
+                            </label>
                             <textarea
                                 id="notes"
                                 name="notes"
@@ -215,16 +253,37 @@ function LicenseModal({ isOpen, onClose, onSave, license = null }) {
                                 onChange={handleChange}
                                 placeholder="Additional notes about this license..."
                                 rows="3"
+                                className="input"
                             />
                         </div>
                     </div>
 
-                    <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>
+                    {/* Footer */}
+                    <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={submitting}
+                            className="btn btn-secondary disabled:opacity-50"
+                        >
                             Cancel
                         </button>
-                        <button type="submit" className="btn btn-primary">
-                            {license ? 'Update License' : 'Add License'}
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {submitting ? (
+                                <>
+                                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Saving...
+                                </>
+                            ) : (
+                                license ? 'Update License' : 'Add License'
+                            )}
                         </button>
                     </div>
                 </form>

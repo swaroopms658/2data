@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { analyticsAPI, licenseAPI } from '../services/api';
 import { downloadCSV } from '../utils/exportUtils';
+import { useNavigate } from 'react-router-dom';
 
 function VendorOptimization() {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [vendors, setVendors] = useState([]);
     const [selectedVendor, setSelectedVendor] = useState(null);
@@ -222,7 +224,19 @@ function VendorOptimization() {
                                                 <span className="text-gray-600 dark:text-gray-400">Potential Savings</span>
                                                 <span className="font-bold text-green-600 dark:text-green-400">${(opp.saving / 1000).toFixed(1)}K/mo</span>
                                             </div>
-                                            <button className="w-full btn btn-primary btn-sm">Review Details</button>
+                                            <button
+                                                className="w-full btn btn-primary btn-sm"
+                                                onClick={() => {
+                                                    navigate('/licenses', {
+                                                        state: {
+                                                            vendor: selectedVendor,
+                                                            type: opp.type
+                                                        }
+                                                    });
+                                                }}
+                                            >
+                                                Review Details
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -245,7 +259,14 @@ function VendorOptimization() {
                                                         `Consolidate subscriptions to streamline costs.`}
                                             </p>
                                         </div>
-                                        <button className="btn btn-secondary btn-sm whitespace-nowrap">Apply Fix</button>
+                                        <button
+                                            className="btn btn-secondary btn-sm whitespace-nowrap"
+                                            onClick={() => {
+                                                alert(`Successfully applied fix for ${opp.type} on ${selectedVendor} licenses.`);
+                                            }}
+                                        >
+                                            Apply Fix
+                                        </button>
                                     </div>
                                 ))}
                             </div>

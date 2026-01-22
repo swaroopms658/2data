@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { licenseAPI } from '../services/api';
 import { downloadCSV } from '../utils/exportUtils';
 import LicenseModal from './LicenseModal';
 
 function LicenseInventory() {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [licenses, setLicenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -36,7 +39,12 @@ function LicenseInventory() {
 
     useEffect(() => {
         fetchLicenses();
-    }, []);
+
+        // Handle incoming filter state from other pages
+        if (location.state?.vendor) {
+            setFilterVendor(location.state.vendor);
+        }
+    }, [location.state]);
 
     const filteredLicenses = licenses.filter(license => {
         const matchesSearch = license.product?.toLowerCase().includes(searchTerm.toLowerCase()) ||

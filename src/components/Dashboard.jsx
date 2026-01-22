@@ -15,6 +15,7 @@ import {
 } from 'chart.js';
 import { licenseAPI, analyticsAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { downloadCSV } from '../utils/exportUtils';
 
 
 // Register ChartJS components
@@ -238,7 +239,13 @@ function Dashboard() {
                     </div>
                     <button
                         className="btn btn-primary"
-                        onClick={() => alert('Export feature coming soon!')}
+                        onClick={() => {
+                            if (licenses.length > 0) {
+                                downloadCSV(licenses, 'dashboard_report.csv');
+                            } else {
+                                alert('No data to export.');
+                            }
+                        }}
                     >
                         <span>📥</span>
                         Export Report
